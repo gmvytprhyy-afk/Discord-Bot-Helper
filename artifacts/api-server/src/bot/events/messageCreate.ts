@@ -10,9 +10,24 @@ export const messageCreateEvent: BotEvent = {
 
     if (message.author.bot) return;
 
-    incrementMessages(message.author.id).catch((err) => {
-      logger.error({ err, discordId: message.author.id }, "Failed to increment message count");
-    });
+    incrementMessages(message.author.id)
+      .then(({ earnedRTK, totalRtk }) => {
+        if (earnedRTK) {
+          message
+            .reply(
+              `🎉 You've sent 100 messages and earned **1 RTK token**! You now have **${totalRtk} RTK**.`,
+            )
+            .catch((err) => {
+              logger.error({ err }, "Failed to send RTK reward message");
+            });
+        }
+      })
+      .catch((err) => {
+        logger.error(
+          { err, discordId: message.author.id },
+          "Failed to increment message count",
+        );
+      });
 
     const prefix = "!";
     if (!message.content.startsWith(prefix)) return;
@@ -33,16 +48,18 @@ export const messageCreateEvent: BotEvent = {
     if (commandName === "help") {
       await message.reply(
         "**Available Commands**\n" +
-        "`/ping` — Check bot latency\n" +
-        "`/help` — Show this help message\n" +
-        "`!ping` — Prefix ping command\n" +
-        "`!help` — Prefix help command"
+          "`/ping` — Check bot latency\n" +
+          "`/help` — Show this help message\n" +
+          "`!ping` — Prefix ping command\n" +
+          "`!help` — Prefix help command",
       );
       return;
     }
 
     if (message.client.commands) {
-      const command = message.client.commands.get(commandName) as BotCommand | undefined;
+      const command = message.client.commands.get(commandName) as
+        | BotCommand
+        | undefined;
       if (command) {
         await message.reply(`Use the slash command version: \`/${commandName}\``);
       }

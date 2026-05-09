@@ -65,14 +65,49 @@ export async function removeRTK(discordId: string, amount: number): Promise<Disc
   return rows[0];
 }
 
-export async function incrementMessages(discordId: string): Promise<void> {
-  await db
-    .insert(usersTable)
-    .values({ discordId, messages: 1 })
-    .onConflictDoUpdate({
-      target: usersTable.discordId,
-      set: { messages: sql`${usersTable.messages} + 1` },
-    });
+const MESSAGES_PER_RTK = 100;
+
+export interface IncrementMessagesResult {
+  messages: number;
+  earnedRTK: boolean;
+  totalRtk: number;
+}
+
+export async function incrementMessages(
+  discordId: string,
+): Promise<IncrementMessagesResult> {
+  return db.transaction(async (tx) => {
+    const upserted = await tx
+      .insert(usersTable)
+      .values({ discordId, messages: 1 })
+      .onConflictDoUpdate({
+        target: usersTable.discordId,
+        set: { messages: sql`${usersTable.messages} + 1` },
+      })
+      .returning();
+
+    const row = upserted[0]!;
+
+    if (row.messages >= MESSAGES_PER_RTK) {
+      const rewarded = await tx
+        .update(usersTable)
+        .set({
+          messages: 0,
+          rtk: sql`${usersTable.rtk} + 1`,
+        })
+        .where(eq(usersTable.discordId, discordId))
+        .returning();
+
+      const rewardedRow = rewarded[0]!;
+      logger.info(
+        { discordId, totalRtk: rewardedRow.rtk },
+        "RTK awarded for 100 messages",
+      );
+      return { messages: 0, earnedRTK: true, totalRtk: rewardedRow.rtk };
+    }
+
+    return { messages: row.messages, earnedRTK: false, totalRtk: row.rtk };
+  });
 }
 
 export async function incrementInvites(discordId: string, count = 1): Promise<DiscordUser> {
