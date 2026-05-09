@@ -1,28 +1,35 @@
 import {
   Client,
-  GatewayIntentBits,
-  Events,
   Collection,
+  GatewayIntentBits,
   type ChatInputCommandInteraction,
   type SlashCommandBuilder,
 } from "discord.js";
 import { logger } from "../lib/logger";
 import { pingCommand } from "./commands/ping";
 import { helpCommand } from "./commands/help";
-import { registerSlashCommands } from "./register-commands";
+import { readyEvent } from "./events/ready";
+import { messageCreateEvent } from "./events/messageCreate";
 
 export interface BotCommand {
   data: SlashCommandBuilder | Omit<SlashCommandBuilder, "addSubcommand" | "addSubcommandGroup">;
   execute: (interaction: ChatInputCommandInteraction) => Promise<void>;
 }
 
-const commands = new Collection<string, BotCommand>();
-
-const allCommands: BotCommand[] = [pingCommand, helpCommand];
-
-for (const command of allCommands) {
-  commands.set(command.data.name, command);
+export interface BotEvent {
+  name: string;
+  once?: boolean;
+  execute: (...args: unknown[]) => Promise<void> | void;
 }
+
+declare module "discord.js" {
+  interface Client {
+    commands: Collection<string, BotCommand>;
+  }
+}
+
+const commands: BotCommand[] = [pingCommand, helpCommand];
+const events: BotEvent[] = [readyEvent, messageCreateEvent];
 
 export function createBot(): Client {
   const token = process.env["DISCORD_BOT_TOKEN"];
@@ -38,45 +45,21 @@ export function createBot(): Client {
     ],
   });
 
-  client.once(Events.ClientReady, async (readyClient) => {
-    logger.info({ tag: readyClient.user.tag }, "Discord bot is online");
+  client.commands = new Collection();
 
-    try {
-      await registerSlashCommands(readyClient.user.id);
-    } catch (err) {
-      logger.error({ err }, "Failed to register slash commands");
+  for (const command of commands) {
+    client.commands.set(command.data.name, command);
+    logger.info({ name: command.data.name }, "Command loaded");
+  }
+
+  for (const event of events) {
+    if (event.once) {
+      client.once(event.name, (...args) => event.execute(...args));
+    } else {
+      client.on(event.name, (...args) => event.execute(...args));
     }
-  });
-
-  client.on(Events.InteractionCreate, async (interaction) => {
-    if (!interaction.isChatInputCommand()) return;
-
-    const command = commands.get(interaction.commandName);
-    if (!command) {
-      logger.warn({ commandName: interaction.commandName }, "Unknown command");
-      await interaction.reply({ content: "Unknown command.", ephemeral: true });
-      return;
-    }
-
-    try {
-      await command.execute(interaction);
-    } catch (err) {
-      logger.error({ err, commandName: interaction.commandName }, "Command error");
-      const msg = { content: "Something went wrong running that command.", ephemeral: true };
-      if (interaction.replied || interaction.deferred) {
-        await interaction.followUp(msg);
-      } else {
-        await interaction.reply(msg);
-      }
-    }
-  });
-
-  client.on(Events.MessageCreate, async (message) => {
-    if (message.author.bot) return;
-    if (message.content.toLowerCase() === "!ping") {
-      await message.reply("Pong!");
-    }
-  });
+    logger.info({ name: event.name }, "Event loaded");
+  }
 
   client.login(token).catch((err) => {
     logger.error({ err }, "Failed to log in to Discord");

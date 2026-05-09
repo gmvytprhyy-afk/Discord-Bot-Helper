@@ -9,11 +9,11 @@ export async function registerSlashCommands(clientId: string): Promise<void> {
     throw new Error("DISCORD_BOT_TOKEN is required to register commands.");
   }
 
-  const commands = [pingCommand, helpCommand].map((c) => c.data.toJSON());
+  const body = [pingCommand, helpCommand].map((c) => c.data.toJSON());
 
   const rest = new REST({ version: "10" }).setToken(token);
 
-  await rest.put(Routes.applicationCommands(clientId), { body: commands });
+  await rest.put(Routes.applicationCommands(clientId), { body });
 
-  logger.info({ count: commands.length }, "Slash commands registered");
+  logger.info({ count: body.length }, "Slash commands registered globally");
 }
