@@ -1,15 +1,13 @@
 import {
   Events,
-  ChannelType,
-  ThreadAutoArchiveDuration,
   EmbedBuilder,
   type Interaction,
-  type TextChannel,
   type StringSelectMenuInteraction,
 } from "discord.js";
 import { logger } from "../../lib/logger";
 import { getItemById, createTicket } from "../db/shop";
-import { getOrCreateUser, addRTK, removeRTK } from "../db/users";
+import { getOrCreateUser, removeRTK } from "../db/users";
+import { createTicketChannel } from "../lib/ticket";
 import type { BotEvent, BotCommand } from "../index";
 
 async function handleShopSelect(interaction: StringSelectMenuInteraction): Promise<void> {
@@ -37,16 +35,10 @@ async function handleShopSelect(interaction: StringSelectMenuInteraction): Promi
     return;
   }
 
-  await removeRTK(interaction.user.id, price);
+  const updated = await removeRTK(interaction.user.id, price);
 
-  const channel = interaction.channel as TextChannel;
-  const thread = await channel.threads.create({
-    name: `🎫 Buy: ${item.name} — ${interaction.user.username}`,
-    autoArchiveDuration: ThreadAutoArchiveDuration.OneWeek,
-    type: ChannelType.PublicThread,
-  });
-
-  await thread.members.add(interaction.user.id);
+  const guild = interaction.guild!;
+  const ticketChannel = await createTicketChannel(guild, interaction.user.id, "buy", item.name);
 
   const embed = new EmbedBuilder()
     .setTitle("🛒 Purchase Ticket")
@@ -55,26 +47,19 @@ async function handleShopSelect(interaction: StringSelectMenuInteraction): Promi
       { name: "User", value: `<@${interaction.user.id}>`, inline: true },
       { name: "Item", value: item.name, inline: true },
       { name: "Price Paid", value: `${price} RTK`, inline: true },
-      { name: "Remaining Balance", value: `${user.rtk - price} RTK`, inline: true },
+      { name: "Remaining Balance", value: `${updated.rtk} RTK`, inline: true },
     )
-    .setDescription("Staff — please fulfill this order and close the ticket when done.")
+    .setDescription("Staff — please fulfill this order and delete the channel when done.")
     .setTimestamp();
 
-  await thread.send({ embeds: [embed] });
+  await ticketChannel.send({ content: `<@${interaction.user.id}>`, embeds: [embed] });
 
-  await createTicket(
-    interaction.guildId!,
-    interaction.user.id,
-    item.name,
-    "buy",
-    thread.id,
-    price,
-  );
+  await createTicket(guild.id, interaction.user.id, item.name, "buy", ticketChannel.id, price);
 
-  logger.info({ userId: interaction.user.id, item: item.name, price }, "Purchase ticket created");
+  logger.info({ userId: interaction.user.id, item: item.name, price }, "Buy ticket channel created");
 
   await interaction.editReply({
-    content: `✅ **${price} RTK** deducted. Your ticket has been created: ${thread.url}`,
+    content: `✅ **${price} RTK** deducted. Your ticket has been opened: <#${ticketChannel.id}>`,
   });
 }
 
@@ -93,14 +78,8 @@ async function handleSellSelect(interaction: StringSelectMenuInteraction): Promi
     return;
   }
 
-  const channel = interaction.channel as TextChannel;
-  const thread = await channel.threads.create({
-    name: `💰 Sell: ${item.name} — ${interaction.user.username}`,
-    autoArchiveDuration: ThreadAutoArchiveDuration.OneWeek,
-    type: ChannelType.PublicThread,
-  });
-
-  await thread.members.add(interaction.user.id);
+  const guild = interaction.guild!;
+  const ticketChannel = await createTicketChannel(guild, interaction.user.id, "sell", item.name);
 
   const embed = new EmbedBuilder()
     .setTitle("💰 Sell Ticket")
@@ -110,23 +89,17 @@ async function handleSellSelect(interaction: StringSelectMenuInteraction): Promi
       { name: "Item", value: item.name, inline: true },
       { name: "Description", value: item.description ?? "None provided", inline: false },
     )
-    .setDescription("Staff — review this sell request and handle payment manually.")
+    .setDescription("Staff — review this sell request and handle payment manually. Delete channel when done.")
     .setTimestamp();
 
-  await thread.send({ embeds: [embed] });
+  await ticketChannel.send({ content: `<@${interaction.user.id}>`, embeds: [embed] });
 
-  await createTicket(
-    interaction.guildId!,
-    interaction.user.id,
-    item.name,
-    "sell",
-    thread.id,
-  );
+  await createTicket(guild.id, interaction.user.id, item.name, "sell", ticketChannel.id);
 
-  logger.info({ userId: interaction.user.id, item: item.name }, "Sell ticket created");
+  logger.info({ userId: interaction.user.id, item: item.name }, "Sell ticket channel created");
 
   await interaction.editReply({
-    content: `✅ Sell ticket created! Staff will contact you: ${thread.url}`,
+    content: `✅ Sell ticket opened! Staff will contact you in <#${ticketChannel.id}>`,
   });
 }
 

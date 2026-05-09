@@ -7,6 +7,9 @@ import {
 import { logger } from "../lib/logger";
 import { pingCommand } from "./commands/ping";
 import { helpCommand } from "./commands/help";
+import { balanceCommand } from "./commands/balance";
+import { leaderboardCommand } from "./commands/leaderboard";
+import { donateCommand } from "./commands/donate";
 import { addRtkCommand } from "./commands/addrtk";
 import { subRtkCommand } from "./commands/subrtk";
 import { createShopPanelCommand } from "./commands/createShopPanel";
@@ -40,6 +43,9 @@ declare module "discord.js" {
 const commands: BotCommand[] = [
   pingCommand,
   helpCommand,
+  balanceCommand,
+  leaderboardCommand,
+  donateCommand,
   addRtkCommand,
   subRtkCommand,
   createShopPanelCommand,
