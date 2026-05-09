@@ -17,6 +17,7 @@ import { guildMemberAddEvent } from "./events/guildMemberAdd";
 import { guildMemberRemoveEvent } from "./events/guildMemberRemove";
 import { inviteCreateEvent } from "./events/inviteCreate";
 import { inviteDeleteEvent } from "./events/inviteDelete";
+import { interactionCreateEvent } from "./events/interactionCreate";
 
 export interface BotCommand {
   data: SlashCommandBuilder | SlashCommandOptionsOnlyBuilder | Omit<SlashCommandBuilder, "addSubcommand" | "addSubcommandGroup">;
@@ -39,6 +40,7 @@ const commands: BotCommand[] = [pingCommand, helpCommand, addRtkCommand, subRtkC
 
 const events: BotEvent[] = [
   readyEvent,
+  interactionCreateEvent,
   messageCreateEvent,
   guildMemberAddEvent,
   guildMemberRemoveEvent,
