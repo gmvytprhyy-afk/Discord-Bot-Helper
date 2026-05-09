@@ -3,14 +3,15 @@ import {
   Collection,
   GatewayIntentBits,
   type ChatInputCommandInteraction,
-  type SlashCommandBuilder,
-  type SlashCommandOptionsOnlyBuilder,
 } from "discord.js";
 import { logger } from "../lib/logger";
 import { pingCommand } from "./commands/ping";
 import { helpCommand } from "./commands/help";
 import { addRtkCommand } from "./commands/addrtk";
 import { subRtkCommand } from "./commands/subrtk";
+import { createShopPanelCommand } from "./commands/createShopPanel";
+import { createSellPanelCommand } from "./commands/createSellPanel";
+import { editPanelsCommand } from "./commands/editPanels";
 import { readyEvent } from "./events/ready";
 import { messageCreateEvent } from "./events/messageCreate";
 import { guildMemberAddEvent } from "./events/guildMemberAdd";
@@ -20,7 +21,7 @@ import { inviteDeleteEvent } from "./events/inviteDelete";
 import { interactionCreateEvent } from "./events/interactionCreate";
 
 export interface BotCommand {
-  data: SlashCommandBuilder | SlashCommandOptionsOnlyBuilder | Omit<SlashCommandBuilder, "addSubcommand" | "addSubcommandGroup">;
+  data: { name: string; toJSON(): object };
   execute: (interaction: ChatInputCommandInteraction) => Promise<void>;
 }
 
@@ -36,7 +37,15 @@ declare module "discord.js" {
   }
 }
 
-const commands: BotCommand[] = [pingCommand, helpCommand, addRtkCommand, subRtkCommand];
+const commands: BotCommand[] = [
+  pingCommand,
+  helpCommand,
+  addRtkCommand,
+  subRtkCommand,
+  createShopPanelCommand,
+  createSellPanelCommand,
+  editPanelsCommand,
+];
 
 const events: BotEvent[] = [
   readyEvent,

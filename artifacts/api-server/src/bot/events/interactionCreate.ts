@@ -1,11 +1,158 @@
-import { Events, type Interaction } from "discord.js";
+import {
+  Events,
+  ChannelType,
+  ThreadAutoArchiveDuration,
+  EmbedBuilder,
+  type Interaction,
+  type TextChannel,
+  type StringSelectMenuInteraction,
+} from "discord.js";
 import { logger } from "../../lib/logger";
+import { getItemById, createTicket } from "../db/shop";
+import { getOrCreateUser, addRTK, removeRTK } from "../db/users";
 import type { BotEvent, BotCommand } from "../index";
+
+async function handleShopSelect(interaction: StringSelectMenuInteraction): Promise<void> {
+  await interaction.deferReply({ ephemeral: true });
+
+  const selectedId = parseInt(interaction.values[0] ?? "0", 10);
+  if (!selectedId) {
+    await interaction.editReply({ content: "❌ Invalid selection." });
+    return;
+  }
+
+  const item = await getItemById(selectedId);
+  if (!item || !item.isActive) {
+    await interaction.editReply({ content: "❌ This item is no longer available." });
+    return;
+  }
+
+  const price = item.price ?? 0;
+  const user = await getOrCreateUser(interaction.user.id);
+
+  if (user.rtk < price) {
+    await interaction.editReply({
+      content: `❌ You need **${price} RTK** but only have **${user.rtk} RTK**.`,
+    });
+    return;
+  }
+
+  await removeRTK(interaction.user.id, price);
+
+  const channel = interaction.channel as TextChannel;
+  const thread = await channel.threads.create({
+    name: `🎫 Buy: ${item.name} — ${interaction.user.username}`,
+    autoArchiveDuration: ThreadAutoArchiveDuration.OneWeek,
+    type: ChannelType.PublicThread,
+  });
+
+  await thread.members.add(interaction.user.id);
+
+  const embed = new EmbedBuilder()
+    .setTitle("🛒 Purchase Ticket")
+    .setColor(0x57f287)
+    .addFields(
+      { name: "User", value: `<@${interaction.user.id}>`, inline: true },
+      { name: "Item", value: item.name, inline: true },
+      { name: "Price Paid", value: `${price} RTK`, inline: true },
+      { name: "Remaining Balance", value: `${user.rtk - price} RTK`, inline: true },
+    )
+    .setDescription("Staff — please fulfill this order and close the ticket when done.")
+    .setTimestamp();
+
+  await thread.send({ embeds: [embed] });
+
+  await createTicket(
+    interaction.guildId!,
+    interaction.user.id,
+    item.name,
+    "buy",
+    thread.id,
+    price,
+  );
+
+  logger.info({ userId: interaction.user.id, item: item.name, price }, "Purchase ticket created");
+
+  await interaction.editReply({
+    content: `✅ **${price} RTK** deducted. Your ticket has been created: ${thread.url}`,
+  });
+}
+
+async function handleSellSelect(interaction: StringSelectMenuInteraction): Promise<void> {
+  await interaction.deferReply({ ephemeral: true });
+
+  const selectedId = parseInt(interaction.values[0] ?? "0", 10);
+  if (!selectedId) {
+    await interaction.editReply({ content: "❌ Invalid selection." });
+    return;
+  }
+
+  const item = await getItemById(selectedId);
+  if (!item || !item.isActive) {
+    await interaction.editReply({ content: "❌ This item is no longer available." });
+    return;
+  }
+
+  const channel = interaction.channel as TextChannel;
+  const thread = await channel.threads.create({
+    name: `💰 Sell: ${item.name} — ${interaction.user.username}`,
+    autoArchiveDuration: ThreadAutoArchiveDuration.OneWeek,
+    type: ChannelType.PublicThread,
+  });
+
+  await thread.members.add(interaction.user.id);
+
+  const embed = new EmbedBuilder()
+    .setTitle("💰 Sell Ticket")
+    .setColor(0xfee75c)
+    .addFields(
+      { name: "User", value: `<@${interaction.user.id}>`, inline: true },
+      { name: "Item", value: item.name, inline: true },
+      { name: "Description", value: item.description ?? "None provided", inline: false },
+    )
+    .setDescription("Staff — review this sell request and handle payment manually.")
+    .setTimestamp();
+
+  await thread.send({ embeds: [embed] });
+
+  await createTicket(
+    interaction.guildId!,
+    interaction.user.id,
+    item.name,
+    "sell",
+    thread.id,
+  );
+
+  logger.info({ userId: interaction.user.id, item: item.name }, "Sell ticket created");
+
+  await interaction.editReply({
+    content: `✅ Sell ticket created! Staff will contact you: ${thread.url}`,
+  });
+}
 
 export const interactionCreateEvent: BotEvent = {
   name: Events.InteractionCreate,
   async execute(i: unknown) {
     const interaction = i as Interaction;
+
+    if (interaction.isStringSelectMenu()) {
+      try {
+        if (interaction.customId === "shop_select") {
+          await handleShopSelect(interaction);
+        } else if (interaction.customId === "sell_select") {
+          await handleSellSelect(interaction);
+        }
+      } catch (err) {
+        logger.error({ err, customId: interaction.customId }, "Select menu error");
+        const msg = { content: "Something went wrong. Please try again.", ephemeral: true };
+        if (interaction.replied || interaction.deferred) {
+          await interaction.editReply(msg);
+        } else {
+          await interaction.reply(msg);
+        }
+      }
+      return;
+    }
 
     if (!interaction.isChatInputCommand()) return;
 
