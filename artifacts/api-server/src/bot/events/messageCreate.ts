@@ -1,5 +1,6 @@
-import { Events, type Message, type ChatInputCommandInteraction } from "discord.js";
+import { Events, type Message } from "discord.js";
 import { logger } from "../../lib/logger";
+import { incrementMessages } from "../db/users";
 import type { BotEvent, BotCommand } from "../index";
 
 export const messageCreateEvent: BotEvent = {
@@ -8,6 +9,10 @@ export const messageCreateEvent: BotEvent = {
     const message = msg as Message;
 
     if (message.author.bot) return;
+
+    incrementMessages(message.author.id).catch((err) => {
+      logger.error({ err, discordId: message.author.id }, "Failed to increment message count");
+    });
 
     const prefix = "!";
     if (!message.content.startsWith(prefix)) return;
@@ -21,7 +26,7 @@ export const messageCreateEvent: BotEvent = {
 
     if (commandName === "ping") {
       const latency = Date.now() - message.createdTimestamp;
-      await message.reply(`Pong! Latency: ${latency}ms`);
+      await message.reply(`Pong! Latency: \`${latency}ms\``);
       return;
     }
 
