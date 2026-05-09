@@ -4,10 +4,13 @@ import {
   GatewayIntentBits,
   type ChatInputCommandInteraction,
   type SlashCommandBuilder,
+  type SlashCommandOptionsOnlyBuilder,
 } from "discord.js";
 import { logger } from "../lib/logger";
 import { pingCommand } from "./commands/ping";
 import { helpCommand } from "./commands/help";
+import { addRtkCommand } from "./commands/addrtk";
+import { subRtkCommand } from "./commands/subrtk";
 import { readyEvent } from "./events/ready";
 import { messageCreateEvent } from "./events/messageCreate";
 import { guildMemberAddEvent } from "./events/guildMemberAdd";
@@ -16,7 +19,7 @@ import { inviteCreateEvent } from "./events/inviteCreate";
 import { inviteDeleteEvent } from "./events/inviteDelete";
 
 export interface BotCommand {
-  data: SlashCommandBuilder | Omit<SlashCommandBuilder, "addSubcommand" | "addSubcommandGroup">;
+  data: SlashCommandBuilder | SlashCommandOptionsOnlyBuilder | Omit<SlashCommandBuilder, "addSubcommand" | "addSubcommandGroup">;
   execute: (interaction: ChatInputCommandInteraction) => Promise<void>;
 }
 
@@ -32,7 +35,7 @@ declare module "discord.js" {
   }
 }
 
-const commands: BotCommand[] = [pingCommand, helpCommand];
+const commands: BotCommand[] = [pingCommand, helpCommand, addRtkCommand, subRtkCommand];
 
 const events: BotEvent[] = [
   readyEvent,
