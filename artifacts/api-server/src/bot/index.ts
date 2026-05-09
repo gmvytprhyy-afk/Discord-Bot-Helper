@@ -10,6 +10,10 @@ import { pingCommand } from "./commands/ping";
 import { helpCommand } from "./commands/help";
 import { readyEvent } from "./events/ready";
 import { messageCreateEvent } from "./events/messageCreate";
+import { guildMemberAddEvent } from "./events/guildMemberAdd";
+import { guildMemberRemoveEvent } from "./events/guildMemberRemove";
+import { inviteCreateEvent } from "./events/inviteCreate";
+import { inviteDeleteEvent } from "./events/inviteDelete";
 
 export interface BotCommand {
   data: SlashCommandBuilder | Omit<SlashCommandBuilder, "addSubcommand" | "addSubcommandGroup">;
@@ -29,7 +33,15 @@ declare module "discord.js" {
 }
 
 const commands: BotCommand[] = [pingCommand, helpCommand];
-const events: BotEvent[] = [readyEvent, messageCreateEvent];
+
+const events: BotEvent[] = [
+  readyEvent,
+  messageCreateEvent,
+  guildMemberAddEvent,
+  guildMemberRemoveEvent,
+  inviteCreateEvent,
+  inviteDeleteEvent,
+];
 
 export function createBot(): Client {
   const token = process.env["DISCORD_BOT_TOKEN"];
@@ -40,6 +52,8 @@ export function createBot(): Client {
   const client = new Client({
     intents: [
       GatewayIntentBits.Guilds,
+      GatewayIntentBits.GuildMembers,
+      GatewayIntentBits.GuildInvites,
       GatewayIntentBits.GuildMessages,
       GatewayIntentBits.MessageContent,
     ],
