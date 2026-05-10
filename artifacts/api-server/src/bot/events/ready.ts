@@ -1,7 +1,6 @@
 import { Events, type Client } from "discord.js";
 import { logger } from "../../lib/logger";
 import { registerSlashCommands } from "../register-commands";
-import { cacheAllGuildInvites } from "../lib/invite-cache";
 import type { BotEvent } from "../index";
 
 export const readyEvent: BotEvent = {
@@ -15,12 +14,6 @@ export const readyEvent: BotEvent = {
       await registerSlashCommands(readyClient.user.id);
     } catch (err) {
       logger.error({ err }, "Failed to register slash commands");
-    }
-
-    try {
-      await cacheAllGuildInvites(readyClient);
-    } catch (err) {
-      logger.error({ err }, "Failed to cache guild invites on startup");
     }
   },
 };

@@ -33,12 +33,23 @@ export async function addItem(
 ): Promise<ShopItem> {
   const rows = await db
     .insert(shopItemsTable)
-    .values({ guildId, name, type, price: price ?? null, description: description ?? null, isActive: true })
+    .values({
+      guildId,
+      name,
+      type,
+      price: price ?? null,
+      description: description ?? null,
+      isActive: true,
+    })
     .returning();
   return rows[0]!;
 }
 
-export async function removeItem(guildId: string, name: string, type: "buy" | "sell"): Promise<boolean> {
+export async function removeItem(
+  guildId: string,
+  name: string,
+  type: "buy" | "sell",
+): Promise<boolean> {
   const rows = await db
     .update(shopItemsTable)
     .set({ isActive: false })
@@ -57,16 +68,31 @@ export async function removeItem(guildId: string, name: string, type: "buy" | "s
 export async function upsertPanel(
   guildId: string,
   channelId: string,
-  type: "shop" | "sell",
+  type: string,
   title: string,
   description?: string,
+  imageUrl?: string,
+  color?: string,
 ): Promise<Panel> {
   const rows = await db
     .insert(panelsTable)
-    .values({ guildId, channelId, type, title, description: description ?? null })
+    .values({
+      guildId,
+      channelId,
+      type,
+      title,
+      description: description ?? null,
+      imageUrl: imageUrl ?? null,
+      color: color ?? null,
+    })
     .onConflictDoUpdate({
-      target: [panelsTable.guildId, panelsTable.type],
-      set: { channelId, title, description: description ?? null },
+      target: [panelsTable.guildId, panelsTable.channelId, panelsTable.type],
+      set: {
+        title,
+        description: description ?? null,
+        imageUrl: imageUrl ?? null,
+        color: color ?? null,
+      },
     })
     .returning();
   return rows[0]!;
@@ -76,11 +102,23 @@ export async function setPanelMessage(panelId: number, messageId: string): Promi
   await db.update(panelsTable).set({ messageId }).where(eq(panelsTable.id, panelId));
 }
 
-export async function getPanel(guildId: string, type: "shop" | "sell"): Promise<Panel | null> {
+export async function getPanel(guildId: string, type: string): Promise<Panel | null> {
   const rows = await db
     .select()
     .from(panelsTable)
     .where(and(eq(panelsTable.guildId, guildId), eq(panelsTable.type, type)))
+    .limit(1);
+  return rows[0] ?? null;
+}
+
+export async function getPanelByChannel(
+  channelId: string,
+  type: string,
+): Promise<Panel | null> {
+  const rows = await db
+    .select()
+    .from(panelsTable)
+    .where(and(eq(panelsTable.channelId, channelId), eq(panelsTable.type, type)))
     .limit(1);
   return rows[0] ?? null;
 }

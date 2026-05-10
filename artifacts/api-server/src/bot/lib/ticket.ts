@@ -38,6 +38,7 @@ export async function createTicketChannel(
     .replace(/^-|-$/g, "")
     .slice(0, 99);
 
+  // Deny @everyone, allow the ticket opener
   const permissionOverwrites: OverwriteResolvable[] = [
     { id: guild.id, deny: [PermissionFlagsBits.ViewChannel] },
     {
@@ -50,6 +51,7 @@ export async function createTicketChannel(
     },
   ];
 
+  // Allow the bot itself
   const botMember = guild.members.me;
   if (botMember) {
     permissionOverwrites.push({
@@ -63,6 +65,27 @@ export async function createTicketChannel(
     });
   }
 
+  // Allow all roles that have Moderator-level permissions (ManageMessages or higher)
+  const staffRoles = guild.roles.cache.filter(
+    (role) =>
+      !role.managed && // exclude bot-managed roles
+      role.id !== guild.id && // exclude @everyone
+      (role.permissions.has(PermissionFlagsBits.ManageMessages) ||
+        role.permissions.has(PermissionFlagsBits.ManageChannels) ||
+        role.permissions.has(PermissionFlagsBits.Administrator)),
+  );
+
+  for (const [roleId] of staffRoles) {
+    permissionOverwrites.push({
+      id: roleId,
+      allow: [
+        PermissionFlagsBits.ViewChannel,
+        PermissionFlagsBits.SendMessages,
+        PermissionFlagsBits.ReadMessageHistory,
+      ],
+    });
+  }
+
   const channel = await guild.channels.create({
     name: safeName,
     type: ChannelType.GuildText,
@@ -70,7 +93,10 @@ export async function createTicketChannel(
     permissionOverwrites,
   });
 
-  logger.info({ guildId: guild.id, channelId: channel.id, type, itemName }, "Ticket channel created");
+  logger.info(
+    { guildId: guild.id, channelId: channel.id, type, itemName, staffRolesAdded: staffRoles.size },
+    "Ticket channel created",
+  );
 
   return channel as GuildTextBasedChannel;
 }

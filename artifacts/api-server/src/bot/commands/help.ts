@@ -20,7 +20,7 @@ export const helpCommand: BotCommand = {
           value: [
             "`/ping` — Check bot latency",
             "`/help` — Show this message",
-            "`/balance [user]` — View RTK, messages & invites",
+            "`/balance [user]` — View RTK & message progress",
             "`/leaderboard` — Top 10 RTK holders",
             "`/donate @user amount` — Send RTK to someone",
           ].join("\n"),
@@ -47,6 +47,8 @@ export const helpCommand: BotCommand = {
             "`/subrtk @user amount` — Remove RTK from a user",
             "`/createshoppanel` — Post the shop panel here",
             "`/createsellpanel` — Post the sell panel here",
+            "`/createpostpanel title:` — Post a rich announcement embed",
+            "`/editpost` — Edit the post panel in this channel",
             "`/editpanels add-shop-item` — Add a buyable item",
             "`/editpanels remove-shop-item` — Remove a buyable item",
             "`/editpanels add-sell-item` — Add a sellable item",
@@ -57,12 +59,11 @@ export const helpCommand: BotCommand = {
           name: "How RTK works",
           value: [
             "• Every **100 messages** → +1 RTK",
-            "• **Invite someone** → +1 RTK (removed if they leave)",
             "• Admins can manually add/remove RTK",
           ].join("\n"),
         },
       )
-      .setFooter({ text: "Tickets are created as private channels under the Tickets category" })
+      .setFooter({ text: "Tickets are private channels — moderators can see all tickets" })
       .setTimestamp();
 
     await interaction.reply({ embeds: [embed] });

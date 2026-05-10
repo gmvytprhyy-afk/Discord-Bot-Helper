@@ -14,16 +14,14 @@ import { addRtkCommand } from "./commands/addrtk";
 import { subRtkCommand } from "./commands/subrtk";
 import { createShopPanelCommand } from "./commands/createShopPanel";
 import { createSellPanelCommand } from "./commands/createSellPanel";
+import { createPostPanelCommand } from "./commands/createPostPanel";
+import { editPostCommand } from "./commands/editpost";
 import { editPanelsCommand } from "./commands/editPanels";
 import { closeTicketCommand } from "./commands/closeticket";
 import { claimTicketCommand } from "./commands/claimticket";
 import { addMemberCommand } from "./commands/addmember";
 import { readyEvent } from "./events/ready";
 import { messageCreateEvent } from "./events/messageCreate";
-import { guildMemberAddEvent } from "./events/guildMemberAdd";
-import { guildMemberRemoveEvent } from "./events/guildMemberRemove";
-import { inviteCreateEvent } from "./events/inviteCreate";
-import { inviteDeleteEvent } from "./events/inviteDelete";
 import { interactionCreateEvent } from "./events/interactionCreate";
 
 export interface BotCommand {
@@ -53,6 +51,8 @@ const commands: BotCommand[] = [
   subRtkCommand,
   createShopPanelCommand,
   createSellPanelCommand,
+  createPostPanelCommand,
+  editPostCommand,
   editPanelsCommand,
   closeTicketCommand,
   claimTicketCommand,
@@ -63,10 +63,6 @@ const events: BotEvent[] = [
   readyEvent,
   interactionCreateEvent,
   messageCreateEvent,
-  guildMemberAddEvent,
-  guildMemberRemoveEvent,
-  inviteCreateEvent,
-  inviteDeleteEvent,
 ];
 
 export function createBot(): Client {
@@ -79,7 +75,6 @@ export function createBot(): Client {
     intents: [
       GatewayIntentBits.Guilds,
       GatewayIntentBits.GuildMembers,
-      GatewayIntentBits.GuildInvites,
       GatewayIntentBits.GuildMessages,
       GatewayIntentBits.MessageContent,
     ],

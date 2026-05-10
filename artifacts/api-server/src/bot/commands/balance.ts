@@ -17,7 +17,7 @@ function progressBar(current: number, total: number, length = 10): string {
 export const balanceCommand: BotCommand = {
   data: new SlashCommandBuilder()
     .setName("balance")
-    .setDescription("Check RTK balance, message progress, and invite count")
+    .setDescription("Check RTK balance and message progress")
     .addUserOption((o) =>
       o.setName("user").setDescription("User to check (defaults to you)").setRequired(false),
     ),
@@ -26,7 +26,10 @@ export const balanceCommand: BotCommand = {
     const target = interaction.options.getUser("user") ?? interaction.user;
 
     if (target.bot) {
-      await interaction.reply({ content: "❌ Bots don't have balances.", flags: MessageFlags.Ephemeral });
+      await interaction.reply({
+        content: "❌ Bots don't have balances.",
+        flags: MessageFlags.Ephemeral,
+      });
       return;
     }
 
@@ -40,8 +43,6 @@ export const balanceCommand: BotCommand = {
       .setColor(0x5865f2)
       .addFields(
         { name: "RTK Balance", value: `**${user.rtk} RTK**`, inline: true },
-        { name: "Invites", value: `**${user.invites}**`, inline: true },
-        { name: "\u200b", value: "\u200b", inline: true },
         {
           name: `Message Progress (${progress}/${MESSAGES_PER_RTK})`,
           value: `\`${bar}\` — ${MESSAGES_PER_RTK - progress} messages until next RTK`,

@@ -9,6 +9,8 @@ import { addRtkCommand } from "./commands/addrtk";
 import { subRtkCommand } from "./commands/subrtk";
 import { createShopPanelCommand } from "./commands/createShopPanel";
 import { createSellPanelCommand } from "./commands/createSellPanel";
+import { createPostPanelCommand } from "./commands/createPostPanel";
+import { editPostCommand } from "./commands/editpost";
 import { editPanelsCommand } from "./commands/editPanels";
 import { closeTicketCommand } from "./commands/closeticket";
 import { claimTicketCommand } from "./commands/claimticket";
@@ -30,6 +32,8 @@ export async function registerSlashCommands(clientId: string): Promise<void> {
     subRtkCommand,
     createShopPanelCommand,
     createSellPanelCommand,
+    createPostPanelCommand,
+    editPostCommand,
     editPanelsCommand,
     closeTicketCommand,
     claimTicketCommand,

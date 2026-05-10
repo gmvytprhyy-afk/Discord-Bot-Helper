@@ -11,11 +11,23 @@ import { db, panelsTable, shopItemsTable } from "@workspace/db";
 import { logger } from "../../lib/logger";
 import type { ShopItem } from "@workspace/db";
 
-export function buildShopEmbed(title: string, description: string | null | undefined, items: ShopItem[]): EmbedBuilder {
+function parseColor(hex: string | null | undefined): number {
+  if (!hex) return 0x5865f2;
+  const parsed = parseInt(hex.replace(/^#/, ""), 16);
+  return isNaN(parsed) ? 0x5865f2 : parsed;
+}
+
+export function buildShopEmbed(
+  title: string,
+  description: string | null | undefined,
+  items: ShopItem[],
+): EmbedBuilder {
   const embed = new EmbedBuilder()
     .setTitle(title)
     .setColor(0x5865f2)
-    .setDescription(description ?? "Browse today's available items. Select one below to purchase with RTK.");
+    .setDescription(
+      description ?? "Browse today's available items. Select one below to purchase with RTK.",
+    );
 
   if (items.length > 0) {
     embed.addFields(
@@ -32,11 +44,18 @@ export function buildShopEmbed(title: string, description: string | null | undef
   return embed;
 }
 
-export function buildSellEmbed(title: string, description: string | null | undefined, items: ShopItem[]): EmbedBuilder {
+export function buildSellEmbed(
+  title: string,
+  description: string | null | undefined,
+  items: ShopItem[],
+): EmbedBuilder {
   const embed = new EmbedBuilder()
     .setTitle(title)
     .setColor(0xfee75c)
-    .setDescription(description ?? "Want to sell something? Select an item below and a staff ticket will be created.");
+    .setDescription(
+      description ??
+        "Want to sell something? Select an item below and a staff ticket will be created.",
+    );
 
   if (items.length > 0) {
     embed.addFields(
@@ -53,7 +72,28 @@ export function buildSellEmbed(title: string, description: string | null | undef
   return embed;
 }
 
-export function buildSelectMenu(customId: string, placeholder: string, items: ShopItem[]): ActionRowBuilder<StringSelectMenuBuilder> {
+export function buildPostEmbed(
+  title: string,
+  description: string | null | undefined,
+  imageUrl: string | null | undefined,
+  color: string | null | undefined,
+): EmbedBuilder {
+  const embed = new EmbedBuilder()
+    .setTitle(title)
+    .setColor(parseColor(color));
+
+  if (description) embed.setDescription(description);
+  if (imageUrl) embed.setImage(imageUrl);
+  embed.setTimestamp();
+
+  return embed;
+}
+
+export function buildSelectMenu(
+  customId: string,
+  placeholder: string,
+  items: ShopItem[],
+): ActionRowBuilder<StringSelectMenuBuilder> {
   const menu = new StringSelectMenuBuilder()
     .setCustomId(customId)
     .setPlaceholder(placeholder);
@@ -105,7 +145,7 @@ export async function refreshPanel(
     .where(
       and(
         eq(shopItemsTable.guildId, guildId),
-        eq(shopItemsTable.type, type),
+        eq(shopItemsTable.type, type === "shop" ? "buy" : "sell"),
         eq(shopItemsTable.isActive, true),
       ),
     );
