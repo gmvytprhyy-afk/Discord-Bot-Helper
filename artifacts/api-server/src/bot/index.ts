@@ -15,6 +15,9 @@ import { subRtkCommand } from "./commands/subrtk";
 import { createShopPanelCommand } from "./commands/createShopPanel";
 import { createSellPanelCommand } from "./commands/createSellPanel";
 import { editPanelsCommand } from "./commands/editPanels";
+import { closeTicketCommand } from "./commands/closeticket";
+import { claimTicketCommand } from "./commands/claimticket";
+import { addMemberCommand } from "./commands/addmember";
 import { readyEvent } from "./events/ready";
 import { messageCreateEvent } from "./events/messageCreate";
 import { guildMemberAddEvent } from "./events/guildMemberAdd";
@@ -51,6 +54,9 @@ const commands: BotCommand[] = [
   createShopPanelCommand,
   createSellPanelCommand,
   editPanelsCommand,
+  closeTicketCommand,
+  claimTicketCommand,
+  addMemberCommand,
 ];
 
 const events: BotEvent[] = [

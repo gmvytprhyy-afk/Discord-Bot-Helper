@@ -10,6 +10,9 @@ import { subRtkCommand } from "./commands/subrtk";
 import { createShopPanelCommand } from "./commands/createShopPanel";
 import { createSellPanelCommand } from "./commands/createSellPanel";
 import { editPanelsCommand } from "./commands/editPanels";
+import { closeTicketCommand } from "./commands/closeticket";
+import { claimTicketCommand } from "./commands/claimticket";
+import { addMemberCommand } from "./commands/addmember";
 
 export async function registerSlashCommands(clientId: string): Promise<void> {
   const token = process.env["DISCORD_BOT_TOKEN"];
@@ -28,6 +31,9 @@ export async function registerSlashCommands(clientId: string): Promise<void> {
     createShopPanelCommand,
     createSellPanelCommand,
     editPanelsCommand,
+    closeTicketCommand,
+    claimTicketCommand,
+    addMemberCommand,
   ].map((c) => c.data.toJSON());
 
   const rest = new REST({ version: "10" }).setToken(token);

@@ -33,6 +33,14 @@ export const helpCommand: BotCommand = {
           ].join("\n"),
         },
         {
+          name: "Ticket Management (staff)",
+          value: [
+            "`/claimticket` — Claim this ticket as your own",
+            "`/closeticket [reason]` — Close and delete the channel",
+            "`/addmember @user` — Add a member to the ticket",
+          ].join("\n"),
+        },
+        {
           name: "Admin Only",
           value: [
             "`/addrtk @user amount` — Give RTK to a user",

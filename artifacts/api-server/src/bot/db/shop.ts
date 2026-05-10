@@ -85,6 +85,22 @@ export async function getPanel(guildId: string, type: "shop" | "sell"): Promise<
   return rows[0] ?? null;
 }
 
+export async function getTicketByChannelId(channelId: string): Promise<Ticket | null> {
+  const rows = await db
+    .select()
+    .from(ticketsTable)
+    .where(eq(ticketsTable.threadId, channelId))
+    .limit(1);
+  return rows[0] ?? null;
+}
+
+export async function updateTicketStatus(channelId: string, status: string): Promise<void> {
+  await db
+    .update(ticketsTable)
+    .set({ status })
+    .where(eq(ticketsTable.threadId, channelId));
+}
+
 export async function createTicket(
   guildId: string,
   userId: string,
