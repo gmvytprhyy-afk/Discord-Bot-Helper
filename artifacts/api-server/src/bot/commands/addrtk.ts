@@ -2,9 +2,10 @@ import {
   SlashCommandBuilder,
   PermissionFlagsBits,
   EmbedBuilder,
+  MessageFlags,
   type ChatInputCommandInteraction,
 } from "discord.js";
-import { addRTK, getOrCreateUser } from "../db/users";
+import { addRTK } from "../db/users";
 import type { BotCommand } from "../index";
 
 export const addRtkCommand: BotCommand = {
@@ -16,16 +17,15 @@ export const addRtkCommand: BotCommand = {
       opt.setName("user").setDescription("The user to add RTK to").setRequired(true),
     )
     .addIntegerOption((opt) =>
-      opt
-        .setName("amount")
-        .setDescription("Amount of RTK to add")
-        .setRequired(true)
-        .setMinValue(1),
+      opt.setName("amount").setDescription("Amount of RTK to add").setRequired(true).setMinValue(1),
     ),
 
   async execute(interaction: ChatInputCommandInteraction) {
     if (!interaction.memberPermissions?.has(PermissionFlagsBits.Administrator)) {
-      await interaction.reply({ content: "❌ You need **Administrator** permission to use this command.", ephemeral: true });
+      await interaction.reply({
+        content: "❌ You need **Administrator** permission to use this command.",
+        flags: MessageFlags.Ephemeral,
+      });
       return;
     }
 
@@ -33,11 +33,13 @@ export const addRtkCommand: BotCommand = {
     const amount = interaction.options.getInteger("amount", true);
 
     if (target.bot) {
-      await interaction.reply({ content: "❌ You cannot add RTK to a bot.", ephemeral: true });
+      await interaction.reply({
+        content: "❌ You cannot add RTK to a bot.",
+        flags: MessageFlags.Ephemeral,
+      });
       return;
     }
 
-    await getOrCreateUser(target.id);
     const updated = await addRTK(target.id, amount);
 
     const embed = new EmbedBuilder()

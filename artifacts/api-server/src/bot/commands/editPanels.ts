@@ -1,6 +1,7 @@
 import {
   SlashCommandBuilder,
   PermissionFlagsBits,
+  MessageFlags,
   type ChatInputCommandInteraction,
 } from "discord.js";
 import { logger } from "../../lib/logger";
@@ -29,7 +30,9 @@ export const editPanelsCommand: BotCommand = {
       sub
         .setName("remove-shop-item")
         .setDescription("Remove an item from the daily shop")
-        .addStringOption((o) => o.setName("name").setDescription("Exact item name").setRequired(true)),
+        .addStringOption((o) =>
+          o.setName("name").setDescription("Exact item name").setRequired(true),
+        ),
     )
     .addSubcommand((sub) =>
       sub
@@ -44,16 +47,21 @@ export const editPanelsCommand: BotCommand = {
       sub
         .setName("remove-sell-item")
         .setDescription("Remove an item from the sell panel")
-        .addStringOption((o) => o.setName("name").setDescription("Exact item name").setRequired(true)),
+        .addStringOption((o) =>
+          o.setName("name").setDescription("Exact item name").setRequired(true),
+        ),
     ),
 
   async execute(interaction: ChatInputCommandInteraction) {
     if (!interaction.memberPermissions?.has(PermissionFlagsBits.Administrator)) {
-      await interaction.reply({ content: "❌ Administrator permission required.", ephemeral: true });
+      await interaction.reply({
+        content: "❌ Administrator permission required.",
+        flags: MessageFlags.Ephemeral,
+      });
       return;
     }
 
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
     const sub = interaction.options.getSubcommand();
     const guildId = interaction.guildId!;
@@ -65,34 +73,43 @@ export const editPanelsCommand: BotCommand = {
       await addItem(guildId, name, "buy", price, description);
       await refreshPanel(guildId, "shop", interaction.client);
       logger.info({ guildId, name, price }, "Shop item added");
-      await interaction.editReply({ content: `✅ Added **${name}** (${price} RTK) to the shop. Panel updated.` });
-
+      await interaction.editReply({
+        content: `✅ Added **${name}** (${price} RTK) to the shop. Panel updated.`,
+      });
     } else if (sub === "remove-shop-item") {
       const removed = await removeItem(guildId, name, "buy");
       if (!removed) {
-        await interaction.editReply({ content: `❌ No active shop item found named **${name}**.` });
+        await interaction.editReply({
+          content: `❌ No active shop item found named **${name}**.`,
+        });
         return;
       }
       await refreshPanel(guildId, "shop", interaction.client);
       logger.info({ guildId, name }, "Shop item removed");
-      await interaction.editReply({ content: `✅ Removed **${name}** from the shop. Panel updated.` });
-
+      await interaction.editReply({
+        content: `✅ Removed **${name}** from the shop. Panel updated.`,
+      });
     } else if (sub === "add-sell-item") {
       const description = interaction.options.getString("description") ?? undefined;
       await addItem(guildId, name, "sell", undefined, description);
       await refreshPanel(guildId, "sell", interaction.client);
       logger.info({ guildId, name }, "Sell item added");
-      await interaction.editReply({ content: `✅ Added **${name}** to the sell panel. Panel updated.` });
-
+      await interaction.editReply({
+        content: `✅ Added **${name}** to the sell panel. Panel updated.`,
+      });
     } else if (sub === "remove-sell-item") {
       const removed = await removeItem(guildId, name, "sell");
       if (!removed) {
-        await interaction.editReply({ content: `❌ No active sell item found named **${name}**.` });
+        await interaction.editReply({
+          content: `❌ No active sell item found named **${name}**.`,
+        });
         return;
       }
       await refreshPanel(guildId, "sell", interaction.client);
       logger.info({ guildId, name }, "Sell item removed");
-      await interaction.editReply({ content: `✅ Removed **${name}** from the sell panel. Panel updated.` });
+      await interaction.editReply({
+        content: `✅ Removed **${name}** from the sell panel. Panel updated.`,
+      });
     }
   },
 };

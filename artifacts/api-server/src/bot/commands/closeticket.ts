@@ -3,6 +3,7 @@ import {
   EmbedBuilder,
   PermissionFlagsBits,
   ChannelType,
+  MessageFlags,
   type ChatInputCommandInteraction,
   type GuildChannel,
   type TextChannel,
@@ -62,13 +63,16 @@ export const closeTicketCommand: BotCommand = {
     if (!isInTicketsCategory(channel)) {
       await interaction.reply({
         content: "❌ This command can only be used inside a ticket channel.",
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
       return;
     }
 
     if (!interaction.memberPermissions?.has(PermissionFlagsBits.ManageChannels)) {
-      await interaction.reply({ content: "❌ You need Manage Channels permission.", ephemeral: true });
+      await interaction.reply({
+        content: "❌ You need Manage Channels permission.",
+        flags: MessageFlags.Ephemeral,
+      });
       return;
     }
 

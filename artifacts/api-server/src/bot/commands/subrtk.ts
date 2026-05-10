@@ -2,6 +2,7 @@ import {
   SlashCommandBuilder,
   PermissionFlagsBits,
   EmbedBuilder,
+  MessageFlags,
   type ChatInputCommandInteraction,
 } from "discord.js";
 import { removeRTK, getOrCreateUser } from "../db/users";
@@ -25,7 +26,10 @@ export const subRtkCommand: BotCommand = {
 
   async execute(interaction: ChatInputCommandInteraction) {
     if (!interaction.memberPermissions?.has(PermissionFlagsBits.Administrator)) {
-      await interaction.reply({ content: "❌ You need **Administrator** permission to use this command.", ephemeral: true });
+      await interaction.reply({
+        content: "❌ You need **Administrator** permission to use this command.",
+        flags: MessageFlags.Ephemeral,
+      });
       return;
     }
 
@@ -33,7 +37,10 @@ export const subRtkCommand: BotCommand = {
     const amount = interaction.options.getInteger("amount", true);
 
     if (target.bot) {
-      await interaction.reply({ content: "❌ You cannot remove RTK from a bot.", ephemeral: true });
+      await interaction.reply({
+        content: "❌ You cannot remove RTK from a bot.",
+        flags: MessageFlags.Ephemeral,
+      });
       return;
     }
 
@@ -42,7 +49,7 @@ export const subRtkCommand: BotCommand = {
     if (user.rtk < amount) {
       await interaction.reply({
         content: `❌ **<@${target.id}>** only has **${user.rtk} RTK** — cannot subtract **${amount}**.`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
       return;
     }

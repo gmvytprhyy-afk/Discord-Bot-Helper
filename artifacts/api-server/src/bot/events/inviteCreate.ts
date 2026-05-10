@@ -1,6 +1,6 @@
 import { Events, type Invite } from "discord.js";
 import { logger } from "../../lib/logger";
-import { setInviteUses } from "../lib/invite-cache";
+import { setInviteInfo } from "../lib/invite-cache";
 import type { BotEvent } from "../index";
 
 export const inviteCreateEvent: BotEvent = {
@@ -8,7 +8,12 @@ export const inviteCreateEvent: BotEvent = {
   execute(inv: unknown) {
     const invite = inv as Invite;
     if (!invite.guild) return;
-    setInviteUses(invite.guild.id, invite.code, invite.uses ?? 0);
+    setInviteInfo(
+      invite.guild.id,
+      invite.code,
+      invite.uses ?? 0,
+      invite.inviter?.id ?? null,
+    );
     logger.info({ code: invite.code, guildId: invite.guild.id }, "Invite created, cache updated");
   },
 };

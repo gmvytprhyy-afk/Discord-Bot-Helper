@@ -2,6 +2,7 @@ import {
   SlashCommandBuilder,
   EmbedBuilder,
   PermissionFlagsBits,
+  MessageFlags,
   type ChatInputCommandInteraction,
   type GuildChannel,
 } from "discord.js";
@@ -26,49 +27,56 @@ export const claimTicketCommand: BotCommand = {
     if (!isInTicketsCategory(channel)) {
       await interaction.reply({
         content: "❌ This command can only be used inside a ticket channel.",
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
       return;
     }
 
     if (!interaction.memberPermissions?.has(PermissionFlagsBits.ManageChannels)) {
-      await interaction.reply({ content: "❌ You need Manage Channels permission.", ephemeral: true });
+      await interaction.reply({
+        content: "❌ You need Manage Channels permission.",
+        flags: MessageFlags.Ephemeral,
+      });
       return;
     }
 
     const ticket = await getTicketByChannelId(channel.id);
 
     if (ticket?.status === "claimed") {
-      await interaction.reply({ content: "⚠️ This ticket is already claimed.", ephemeral: true });
+      await interaction.reply({
+        content: "⚠️ This ticket is already claimed.",
+        flags: MessageFlags.Ephemeral,
+      });
       return;
     }
 
     if (ticket?.status === "closed") {
-      await interaction.reply({ content: "⚠️ This ticket is already closed.", ephemeral: true });
+      await interaction.reply({
+        content: "⚠️ This ticket is already closed.",
+        flags: MessageFlags.Ephemeral,
+      });
       return;
     }
 
     await interaction.deferReply();
 
     await updateTicketStatus(channel.id, "claimed");
-
-    const newName = `claimed-${channel.name}`.slice(0, 99);
-    await channel.setName(newName).catch(() => null);
+    await channel.setName(`claimed-${channel.name}`.slice(0, 99)).catch(() => null);
 
     const embed = new EmbedBuilder()
       .setTitle("✅ Ticket Claimed")
       .setColor(0x57f287)
-      .setDescription(`This ticket has been claimed by <@${interaction.user.id}>.`)
-      .addFields(
-        ticket
-          ? [
-              { name: "Item", value: ticket.itemName, inline: true },
-              { name: "Type", value: ticket.type, inline: true },
-              { name: "Opened by", value: `<@${ticket.userId}>`, inline: true },
-            ]
-          : [],
-      )
-      .setTimestamp();
+      .setDescription(`This ticket has been claimed by <@${interaction.user.id}>.`);
+
+    if (ticket) {
+      embed.addFields(
+        { name: "Item", value: ticket.itemName, inline: true },
+        { name: "Type", value: ticket.type, inline: true },
+        { name: "Opened by", value: `<@${ticket.userId}>`, inline: true },
+      );
+    }
+
+    embed.setTimestamp();
 
     logger.info({ channelId: channel.id, claimedBy: interaction.user.id }, "Ticket claimed");
 

@@ -1,6 +1,7 @@
 import {
   SlashCommandBuilder,
   EmbedBuilder,
+  MessageFlags,
   type ChatInputCommandInteraction,
 } from "discord.js";
 import { getOrCreateUser } from "../db/users";
@@ -25,7 +26,7 @@ export const balanceCommand: BotCommand = {
     const target = interaction.options.getUser("user") ?? interaction.user;
 
     if (target.bot) {
-      await interaction.reply({ content: "❌ Bots don't have balances.", ephemeral: true });
+      await interaction.reply({ content: "❌ Bots don't have balances.", flags: MessageFlags.Ephemeral });
       return;
     }
 

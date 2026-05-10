@@ -1,6 +1,7 @@
 import {
   SlashCommandBuilder,
   EmbedBuilder,
+  MessageFlags,
   type ChatInputCommandInteraction,
 } from "discord.js";
 import { donateRTK } from "../db/users";
@@ -22,12 +23,18 @@ export const donateCommand: BotCommand = {
     const amount = interaction.options.getInteger("amount", true);
 
     if (target.id === interaction.user.id) {
-      await interaction.reply({ content: "❌ You cannot donate to yourself.", ephemeral: true });
+      await interaction.reply({
+        content: "❌ You cannot donate to yourself.",
+        flags: MessageFlags.Ephemeral,
+      });
       return;
     }
 
     if (target.bot) {
-      await interaction.reply({ content: "❌ You cannot donate to bots.", ephemeral: true });
+      await interaction.reply({
+        content: "❌ You cannot donate to bots.",
+        flags: MessageFlags.Ephemeral,
+      });
       return;
     }
 

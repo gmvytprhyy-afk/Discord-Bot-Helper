@@ -2,6 +2,7 @@ import {
   SlashCommandBuilder,
   EmbedBuilder,
   PermissionFlagsBits,
+  MessageFlags,
   type ChatInputCommandInteraction,
   type GuildChannel,
 } from "discord.js";
@@ -28,20 +29,26 @@ export const addMemberCommand: BotCommand = {
     if (!isInTicketsCategory(channel)) {
       await interaction.reply({
         content: "❌ This command can only be used inside a ticket channel.",
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
       return;
     }
 
     if (!interaction.memberPermissions?.has(PermissionFlagsBits.ManageChannels)) {
-      await interaction.reply({ content: "❌ You need Manage Channels permission.", ephemeral: true });
+      await interaction.reply({
+        content: "❌ You need Manage Channels permission.",
+        flags: MessageFlags.Ephemeral,
+      });
       return;
     }
 
     const target = interaction.options.getUser("user", true);
 
     if (target.bot) {
-      await interaction.reply({ content: "❌ Cannot add bots to tickets.", ephemeral: true });
+      await interaction.reply({
+        content: "❌ Cannot add bots to tickets.",
+        flags: MessageFlags.Ephemeral,
+      });
       return;
     }
 
@@ -56,7 +63,9 @@ export const addMemberCommand: BotCommand = {
     const embed = new EmbedBuilder()
       .setTitle("👤 Member Added")
       .setColor(0x5865f2)
-      .setDescription(`<@${target.id}> has been added to this ticket by <@${interaction.user.id}>.`)
+      .setDescription(
+        `<@${target.id}> has been added to this ticket by <@${interaction.user.id}>.`,
+      )
       .setTimestamp();
 
     logger.info(

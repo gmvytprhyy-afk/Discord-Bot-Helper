@@ -1,6 +1,8 @@
 import {
   SlashCommandBuilder,
   PermissionFlagsBits,
+  ChannelType,
+  MessageFlags,
   type ChatInputCommandInteraction,
   type TextChannel,
 } from "discord.js";
@@ -23,11 +25,22 @@ export const createSellPanelCommand: BotCommand = {
 
   async execute(interaction: ChatInputCommandInteraction) {
     if (!interaction.memberPermissions?.has(PermissionFlagsBits.Administrator)) {
-      await interaction.reply({ content: "❌ Administrator permission required.", ephemeral: true });
+      await interaction.reply({
+        content: "❌ Administrator permission required.",
+        flags: MessageFlags.Ephemeral,
+      });
       return;
     }
 
-    await interaction.deferReply({ ephemeral: true });
+    if (interaction.channel?.type !== ChannelType.GuildText) {
+      await interaction.reply({
+        content: "❌ This command can only be used in a text channel.",
+        flags: MessageFlags.Ephemeral,
+      });
+      return;
+    }
+
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
     const title = interaction.options.getString("title") ?? "💰 Sell Items";
     const description = interaction.options.getString("description") ?? undefined;
