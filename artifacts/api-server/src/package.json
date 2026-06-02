@@ -1,0 +1,5 @@
+{
+  "scripts": {
+    "start": "tsx src/bot/index.ts"
+  }
+}
